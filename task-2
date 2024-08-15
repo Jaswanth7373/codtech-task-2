@@ -1,1 +1,85 @@
+import numpy as np
+import pandas as pd
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score, davies_bouldin_score
+from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+import matplotlib.pyplot as plt
+
+# Create a sample dataset (replace this with your actual dataset)
+data = {
+    'pages': [300, 150, 500, 200, 350, 450, 100, 250, 600, 320],
+    'publication_year': [2000, 1995, 2010, 2005, 2015, 2020, 1990, 2008, 2018, 2001],
+    'num_authors': [1, 2, 1, 1, 3, 1, 2, 1, 1, 2]
+}
+df = pd.DataFrame(data)
+
+# Features for clustering
+X = df[['pages', 'publication_year', 'num_authors']]
+
+# Standardize features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Define the number of clusters for KMeans
+k = 3
+
+# KMeans Clustering
+kmeans = KMeans(n_clusters=k, random_state=42)
+kmeans_labels = kmeans.fit_predict(X_scaled)
+df['KMeans_Cluster'] = kmeans_labels
+
+# DBSCAN Clustering
+dbscan = DBSCAN(eps=0.5, min_samples=2)
+dbscan_labels = dbscan.fit_predict(X_scaled)
+df['DBSCAN_Cluster'] = dbscan_labels
+
+# Hierarchical Clustering
+linkage_matrix = linkage(X_scaled, method='ward')
+hierarchical_labels = fcluster(linkage_matrix, t=k, criterion='maxclust')
+df['Hierarchical_Cluster'] = hierarchical_labels
+
+# Evaluate clustering results
+def evaluate_clustering(labels, X_scaled):
+    silhouette_avg = silhouette_score(X_scaled, labels)
+    davies_bouldin = davies_bouldin_score(X_scaled, labels)
+    return silhouette_avg, davies_bouldin
+
+# Evaluate KMeans
+kmeans_silhouette, kmeans_davies_bouldin = evaluate_clustering(kmeans_labels, X_scaled)
+print(f'KMeans - Silhouette Score: {kmeans_silhouette:.2f}, Davies-Bouldin Index: {kmeans_davies_bouldin:.2f}')
+
+# Evaluate DBSCAN
+dbscan_silhouette, dbscan_davies_bouldin = evaluate_clustering(dbscan_labels, X_scaled)
+print(f'DBSCAN - Silhouette Score: {dbscan_silhouette:.2f}, Davies-Bouldin Index: {dbscan_davies_bouldin:.2f}')
+
+# Evaluate Hierarchical
+hierarchical_silhouette, hierarchical_davies_bouldin = evaluate_clustering(hierarchical_labels, X_scaled)
+print(f'Hierarchical - Silhouette Score: {hierarchical_silhouette:.2f}, Davies-Bouldin Index: {hierarchical_davies_bouldin:.2f}')
+
+# Visualization of KMeans Clusters
+plt.figure(figsize=(15, 5))
+
+plt.subplot(1, 3, 1)
+plt.scatter(df['pages'], df['publication_year'], c=df['KMeans_Cluster'], cmap='viridis')
+plt.xlabel('Pages')
+plt.ylabel('Publication Year')
+plt.title('KMeans Clustering')
+
+# Visualization of DBSCAN Clusters
+plt.subplot(1, 3, 2)
+plt.scatter(df['pages'], df['publication_year'], c=df['DBSCAN_Cluster'], cmap='viridis')
+plt.xlabel('Pages')
+plt.ylabel('Publication Year')
+plt.title('DBSCAN Clustering')
+
+# Visualization of Hierarchical Clusters
+plt.subplot(1, 3, 3)
+plt.scatter(df['pages'], df['publication_year'], c=df['Hierarchical_Cluster'], cmap='viridis')
+plt.xlabel('Pages')
+plt.ylabel('Publication Year')
+plt.title('Hierarchical Clustering')
+
+plt.tight_layout()
+plt.show()
 
