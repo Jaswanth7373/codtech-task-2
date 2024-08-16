@@ -1,3 +1,15 @@
+Name: MEDI NARASIMHA MURTHY GARI JASWANTH
+
+Company: CODTECH IT SOLUTIONS
+
+ID:CT6WDS385
+
+Domain:DATA SCIENCE
+
+Duration:AUGUST 1st,to SEPTEMBER 15th, 2024.
+
+Mentor:Muzammil Ahmed.
+
 Overview:
 
 A Library Management System (LMS) is designed to efficiently manage library resources. It handles tasks like cataloging, circulation, acquisitions, and user management.
