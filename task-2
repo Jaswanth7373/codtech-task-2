@@ -1,85 +1,108 @@
+/* To combine the concepts of a Library Management System with unsupervised learning techniques,
+we need to integrate clustering algorithms into a system that could potentially analyze some characteristics of books or users in the library. 
+For simplicity, let's assume we're clustering books based on some features like their genres or other numerical attributes.*/
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans, DBSCAN
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import silhouette_score, davies_bouldin_score
-from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.datasets import make_blobs
+from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
+from sklearn.metrics import silhouette_score, davies_bouldin_score
+from sklearn.preprocessing import StandardScaler
 
-# Create a sample dataset (replace this with your actual dataset)
-data = {
-    'pages': [300, 150, 500, 200, 350, 450, 100, 250, 600, 320],
-    'publication_year': [2000, 1995, 2010, 2005, 2015, 2020, 1990, 2008, 2018, 2001],
-    'num_authors': [1, 2, 1, 1, 3, 1, 2, 1, 1, 2]
-}
-df = pd.DataFrame(data)
+# Step 1: Define the Library Management System
+class Book:
+    def __init__(self, title, author, genre, pages):
+        self.title = title
+        self.author = author
+        self.genre = genre
+        self.pages = pages
 
-# Features for clustering
-X = df[['pages', 'publication_year', 'num_authors']]
+    def __str__(self):
+        return f"Title: {self.title}, Author: {self.author}, Genre: {self.genre}, Pages: {self.pages}"
+
+class Library:
+    def __init__(self):
+        self.books = []
+        self.data = pd.DataFrame(columns=['Title', 'Author', 'Genre', 'Pages'])
+
+    def add_book(self, book):
+        self.books.append(book)
+        self.data = pd.concat([self.data, pd.DataFrame([vars(book)])], ignore_index=True)
+        print(f"Book '{book.title}' added to the library.")
+
+    def list_books(self):
+        if self.data.empty:
+            print("No books in the library.")
+        else:
+            print(self.data)
+
+# Step 2: Create a Library and Add Books
+library = Library()
+
+# Add some books with fictional data
+books = [
+    Book("1984", "George Orwell", "Dystopian", 328),
+    Book("To Kill a Mockingbird", "Harper Lee", "Fiction", 281),
+    Book("Moby Dick", "Herman Melville", "Adventure", 585),
+    Book("The Great Gatsby", "F. Scott Fitzgerald", "Fiction", 180),
+    Book("War and Peace", "Leo Tolstoy", "Historical", 1225)
+]
+
+for book in books:
+    library.add_book(book)
+
+# List books in the library
+library.list_books()
+
+# Step 3: Perform Clustering Analysis
+
+# Extract features for clustering
+X = library.data[['Pages']].values  # Using 'Pages' as a feature for clustering
 
 # Standardize features
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Define the number of clusters for KMeans
-k = 3
+# Define clustering algorithms
+def apply_kmeans(X, n_clusters):
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    labels = kmeans.fit_predict(X)
+    return labels, kmeans
 
-# KMeans Clustering
-kmeans = KMeans(n_clusters=k, random_state=42)
-kmeans_labels = kmeans.fit_predict(X_scaled)
-df['KMeans_Cluster'] = kmeans_labels
+def apply_agglomerative(X, n_clusters):
+    agg = AgglomerativeClustering(n_clusters=n_clusters)
+    labels = agg.fit_predict(X)
+    return labels, agg
 
-# DBSCAN Clustering
-dbscan = DBSCAN(eps=0.5, min_samples=2)
-dbscan_labels = dbscan.fit_predict(X_scaled)
-df['DBSCAN_Cluster'] = dbscan_labels
+def apply_dbscan(X):
+    dbscan = DBSCAN(eps=0.5, min_samples=2)
+    labels = dbscan.fit_predict(X)
+    return labels, dbscan
 
-# Hierarchical Clustering
-linkage_matrix = linkage(X_scaled, method='ward')
-hierarchical_labels = fcluster(linkage_matrix, t=k, criterion='maxclust')
-df['Hierarchical_Cluster'] = hierarchical_labels
+def plot_clusters(X, labels, title):
+    plt.figure(figsize=(10, 6))
+    sns.scatterplot(x=X[:, 0], y=np.zeros_like(X[:, 0]), hue=labels, palette='viridis', marker='o')
+    plt.title(title)
+    plt.xlabel('Pages')
+    plt.ylabel('Cluster')
+    plt.legend(title='Cluster')
+    plt.show()
 
-# Evaluate clustering results
-def evaluate_clustering(labels, X_scaled):
-    silhouette_avg = silhouette_score(X_scaled, labels)
-    davies_bouldin = davies_bouldin_score(X_scaled, labels)
-    return silhouette_avg, davies_bouldin
+# Apply K-means clustering
+kmeans_labels, kmeans_model = apply_kmeans(X_scaled, n_clusters=3)
+print(f"K-means Silhouette Score: {silhouette_score(X_scaled, kmeans_labels):.3f}")
+print(f"K-means Davies-Bouldin Index: {davies_bouldin_score(X_scaled, kmeans_labels):.3f}")
+plot_clusters(X_scaled, kmeans_labels, 'K-means Clustering')
 
-# Evaluate KMeans
-kmeans_silhouette, kmeans_davies_bouldin = evaluate_clustering(kmeans_labels, X_scaled)
-print(f'KMeans - Silhouette Score: {kmeans_silhouette:.2f}, Davies-Bouldin Index: {kmeans_davies_bouldin:.2f}')
+# Apply Agglomerative Clustering
+agg_labels, agg_model = apply_agglomerative(X_scaled, n_clusters=3)
+print(f"Agglomerative Clustering Silhouette Score: {silhouette_score(X_scaled, agg_labels):.3f}")
+print(f"Agglomerative Clustering Davies-Bouldin Index: {davies_bouldin_score(X_scaled, agg_labels):.3f}")
+plot_clusters(X_scaled, agg_labels, 'Agglomerative Clustering')
 
-# Evaluate DBSCAN
-dbscan_silhouette, dbscan_davies_bouldin = evaluate_clustering(dbscan_labels, X_scaled)
-print(f'DBSCAN - Silhouette Score: {dbscan_silhouette:.2f}, Davies-Bouldin Index: {dbscan_davies_bouldin:.2f}')
-
-# Evaluate Hierarchical
-hierarchical_silhouette, hierarchical_davies_bouldin = evaluate_clustering(hierarchical_labels, X_scaled)
-print(f'Hierarchical - Silhouette Score: {hierarchical_silhouette:.2f}, Davies-Bouldin Index: {hierarchical_davies_bouldin:.2f}')
-
-# Visualization of KMeans Clusters
-plt.figure(figsize=(15, 5))
-
-plt.subplot(1, 3, 1)
-plt.scatter(df['pages'], df['publication_year'], c=df['KMeans_Cluster'], cmap='viridis')
-plt.xlabel('Pages')
-plt.ylabel('Publication Year')
-plt.title('KMeans Clustering')
-
-# Visualization of DBSCAN Clusters
-plt.subplot(1, 3, 2)
-plt.scatter(df['pages'], df['publication_year'], c=df['DBSCAN_Cluster'], cmap='viridis')
-plt.xlabel('Pages')
-plt.ylabel('Publication Year')
-plt.title('DBSCAN Clustering')
-
-# Visualization of Hierarchical Clusters
-plt.subplot(1, 3, 3)
-plt.scatter(df['pages'], df['publication_year'], c=df['Hierarchical_Cluster'], cmap='viridis')
-plt.xlabel('Pages')
-plt.ylabel('Publication Year')
-plt.title('Hierarchical Clustering')
-
-plt.tight_layout()
-plt.show()
-
+# Apply DBSCAN
+dbscan_labels, dbscan_model = apply_dbscan(X_scaled)
+print(f"DBSCAN Silhouette Score: {silhouette_score(X_scaled, dbscan_labels, metric='euclidean') if len(set(dbscan_labels)) > 1 else 'undefined'}")
+print(f"DBSCAN Davies-Bouldin Index: {davies_bouldin_score(X_scaled, dbscan_labels) if len(set(dbscan_labels)) > 1 else 'undefined'}")
+plot_clusters(X_scaled, dbscan_labels, 'DBSCAN Clustering')
