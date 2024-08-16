@@ -47,3 +47,15 @@ Search and Retrieval: Implement search functionality based on book titles, autho
 Notifications: Set up notifications (email or SMS) for due dates, overdue books, etc.
 
 Conclusion: Building an LMS in Python involves combining various modules, libraries, and tools. Start by designing the database schema, create user interfaces, and handle transactions effectively. Remember to keep security and scalability in mind as your system grows!
+
+output:-
+1. Library Management System Output:-
+
+   ![image](https://github.com/user-attachments/assets/88cd1c62-74de-4a0c-bc86-7c9ca67bfa69)
+
+2.Then, it lists all books in the library:
+
+   ![image](https://github.com/user-attachments/assets/40ddcd44-8066-4b17-8fc3-d2c8b1e52c28)
+
+
+
